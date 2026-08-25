@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Wallet Action — Demo</title>
+<style>
+:root{--bg:#0b0b0f;--panel:#17171b;--panel2:#202023;--text:#f5f5f5;--muted:#8f8f96;--line:#29292e;--accent:#f0bd78;--disabled:#3b3d42}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#000;color:var(--text);font-family:Arial,Helvetica,sans-serif}
+body{min-height:100vh;display:flex;justify-content:center}
+.app{width:100%;max-width:430px;min-height:100vh;background:var(--bg);overflow:hidden;position:relative}
+.top{height:72px;padding:16px 16px 8px;display:flex;align-items:center;justify-content:space-between}
+.title{font-size:14px;font-weight:600}.chev{font-size:13px;color:#aaa}
+.top-right{display:flex;gap:8px;align-items:center}
+.icon{width:34px;height:28px;border:1px solid #33343a;border-radius:15px;display:flex;align-items:center;justify-content:center;color:#ddd;font-size:12px}
+.status{padding:0 18px 12px}.status small{color:#8b8b92;font-size:10px}.balance{font-size:21px;font-weight:700;margin:5px 0}.usd{font-size:11px;color:#777}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 17px 17px}
+.action{height:32px;border:0;border-radius:5px;font-size:12px;font-weight:600}.deposit{background:#f0bd78;color:#17120c}.withdraw{background:#2a2b2e;color:#eee}
+.tabs{height:38px;border-bottom:1px solid #1e1e22;display:flex;padding:0 17px;gap:26px}
+.tab{position:relative;font-size:11px;color:#999;display:flex;align-items:center}.tab.active{color:#eee;font-weight:600}.tab.active:after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:28px;height:2px;background:#f0bd78;border-radius:2px}
+.assets{padding:0 17px 72px}.asset{padding:13px 0;border-bottom:1px solid #1e1e22}.asset-head{display:flex;align-items:center;gap:9px}.coin{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;background:#31c48d}.coin.usdt{background:#20b99b}.coin.bnb{background:#f0b90b;color:#111}.coin.eth{background:#777}.coin.btc{background:#f7931a}.coin.aster{background:#e7e2d4;color:#333}.coin.snd{background:#d73434}.coin.nvd{background:#78b52c}.coin.usdc{background:#2775ca}
+.name{font-size:12px}.asset-grid{display:grid;grid-template-columns:1fr 1fr;margin-top:8px;gap:3px;color:#929299;font-size:9px;line-height:1.45}.asset-grid div:nth-child(even){text-align:right}.asset-grid b{color:#aaa;font-weight:400}
+.bottom{position:fixed;bottom:0;width:100%;max-width:430px;height:58px;background:#0d0d10;border-top:1px solid #202024;display:grid;grid-template-columns:repeat(3,1fr);z-index:5}.nav{font-size:9px;color:#777;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}.nav.active{color:#e6c18b}.nav span{font-size:17px}
+
+.page{display:none;min-height:100vh}.page.active{display:block}
+.withdraw-page{padding-bottom:72px}.withdraw-header{height:60px;display:flex;align-items:center;padding:0 16px;gap:14px}.back{font-size:23px;color:#bbb}.withdraw-title{font-size:12px;color:#ddd}
+.form{padding:0 17px}.label{font-size:10px;color:#8f8f96;margin:8px 0 6px}
+.select,.input-wrap{height:42px;background:#202023;border-radius:5px;display:flex;align-items:center;padding:0 11px;margin-bottom:10px}.select{justify-content:space-between}.select-left{display:flex;align-items:center;gap:9px;font-size:12px}.arrow{font-size:17px;color:#aaa}.input-wrap input{background:none;border:0;outline:0;color:#eee;width:100%;font-size:12px}.max{font-size:9px;border:1px solid #696a70;border-radius:4px;padding:2px 5px;color:#ccc;margin-right:6px}.unit{font-size:10px;color:#ddd}.available{font-size:9px;color:#777;margin:-3px 0 18px}
+.info{border:1px solid #24252a;background:#17171a;border-radius:5px;padding:10px 11px;margin-top:10px}.row{display:flex;justify-content:space-between;font-size:10px;margin:6px 0;color:#888}.row b{color:#bbb;font-weight:400}.hint{font-size:9px;color:#777;margin-top:9px}
+.withdraw-submit{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);width:calc(100% - 34px);max-width:396px;height:36px;border:0;border-radius:5px;background:#8b909b;color:#17181c;font-weight:600;font-size:11px}.withdraw-submit.enabled{background:#f0bd78}
+.spinner{width:42px;height:42px;border:4px solid #555;border-top-color:#eee;border-radius:50%;animation:spin .8s linear infinite;margin:30px auto;display:none}@keyframes spin{to{transform:rotate(360deg)}}
+
+.sheet-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:20}.sheet-bg.show{display:block}.sheet{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#222;border-radius:12px 12px 0 0;max-height:78vh;overflow:auto;padding:10px 17px 28px}.grab{width:42px;height:4px;border-radius:4px;background:#777;margin:0 auto 17px}.sheet h3{text-align:center;font-size:13px;margin:0 0 16px}.coin-option{height:35px;display:flex;align-items:center;gap:10px;font-size:11px;border-radius:5px;padding:0 5px}.coin-option:active{background:#303033}.network-option{height:43px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:#29292d;border-radius:5px;margin-bottom:7px;font-size:11px}
+.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%) translateY(20px);background:#eee;color:#111;padding:9px 14px;border-radius:6px;font-size:10px;opacity:0;pointer-events:none;transition:.2s;z-index:50}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <section id="walletPage" class="page active">
+
+    <div class="top">
+      <div class="title">
+        Wallet <span class="chev">⌄</span>
+      </div>
+
+      <div class="top-right">
+        <div class="icon">⋯</div>
+        <div class="icon">◉</div>
+      </div>
+    </div>
+
+    <div class="status">
+      <small>Total Value　◉</small>
+      <div class="balance" id="totalBalance">$ 0.0000</div>
+      <div class="usd">≈ $ 0.00</div>
+    </div>
+
+    <div class="actions">
+      <button
+        class="action deposit"
+        onclick="toast('Deposit is available in this demo')">
+        Deposit
+      </button>
+
+      <button
+        class="action withdraw"
+        onclick="openWithdraw()">
+        Withdraw
+      </button>
+    </div>
+
+    <div class="tabs">
+      <div class="tab">Positions</div>
+      <div class="tab active">Asset</div>
+    </div>
+
+    <div id="assetList" class="assets"></div>
+
+    <nav class="bottom">
+      <div class="nav">
+        <span>⌁</span>
+        Markets
+      </div>
+
+      <div class="nav">
+        <span>▣</span>
+        Futures
+      </div>
+
+      <div class="nav active">
+        <span>▣</span>
+        Wallet
+      </div>
+    </nav>
+
+  </section>
+
+
+  <section id="withdrawPage" class="page withdraw-page">
+
+    <div class="withdraw-header">
+      <button class="back" onclick="showWallet()">‹</button>
+      <div class="withdraw-title">Withdraw</div>
+    </div>
+
+    <div class="form">
+
+      <div class="label">Coin</div>
+
+      <div class="select" onclick="openCoinSheet()">
+        <div class="select-left">
+          <span id="coinIcon" class="coin usdt">₮</span>
+          <span id="coinName">USDT</span>
+        </div>
+
+        <span class="arrow">›</span>
+      </div>
+
+
+      <div class="label">Network</div>
+
+      <div class="select" onclick="openNetworkSheet()">
+        <div class="select-left">
+          <span id="networkIcon" class="coin bnb">◆</span>
+          <span id="networkName">BNB Chain</span>
+        </div>
+
+        <span class="arrow">›</span>
+      </div>
+
+
+      <div class="label">Amount</div>
+
+      <div class="input-wrap">
+
+        <input
+          id="amount"
+          type="number"
+          inputmode="decimal"
+          placeholder="Enter Amount"
+          oninput="updateAmount()">
+
+        <span
+          class="max"
+          onclick="setMax()">
+          MAX
+        </span>
+
+        <span class="unit" id="unit">
+          USDT
+        </span>
+
+      </div>
+
+      <div class="available" id="available">
+        Available : 0 USDT (BEP20)
+      </div>
+
+      <div class="spinner" id="spinner"></div>
+
+      <div class="info">
+
+        <div class="row">
+          <span>Withdrawable Amount</span>
+          <b id="withdrawable">0 USD</b>
+        </div>
+
+        <div class="row">
+          <span>Withdrawal Fee</span>
+          <b id="fee">0 USDT</b>
+        </div>
+
+        <div class="hint">
+          Withdrawals should arrive in about 30 seconds.
+        </div>
+
+      </div>
+
+    </div>
+
+    <button
+      id="submit"
+      class="withdraw-submit"
+      onclick="submitWithdraw()">
+      Withdraw
+    </button>
+
+  </section>
+
+
+  <div
+    id="coinSheet"
+    class="sheet-bg"
+    onclick="closeSheets(event)">
+
+    <div
+      class="sheet"
+      onclick="event.stopPropagation()">
+
+      <div class="grab"></div>
+
+      <h3>Select Coins</h3>
+
+      <div id="coinOptions"></div>
+
+    </div>
+
+  </div>
+
+
+  <div
+    id="networkSheet"
+    class="sheet-bg"
+    onclick="closeSheets(event)">
+
+    <div
+      class="sheet"
+      onclick="event.stopPropagation()">
+
+      <div class="grab"></div>
+
+      <h3>Select Network</h3>
+
+      <div id="networkOptions"></div>
+
+    </div>
+
+  </div>
+
+
+  <div id="toast" class="toast"></div>
+
+</div>
+
+
+<script>
+
+const coins = [
+
+  {
+    name:'USDT',
+    sym:'₮',
+    cls:'usdt',
+    balance:0
+  },
+
+  {
+    name:'BONSUSD',
+    sym:'◎',
+    cls:'',
+    balance:0
+  },
+
+  {
+    name:'U',
+    sym:'U',
+    cls:'',
+    balance:0
+  },
+
+  {
+    name:'USDC',
+    sym:'$',
+    cls:'usdc',
+    balance:0
+  },
+
+  {
+    name:'SNDKB',
+    sym:'S',
+    cls:'snd',
+    balance:0
+  },
+
+  {
+    name:'NVDAB',
+    sym:'N',
+    cls:'nvd',
+    balance:0
+  },
+
+  {
+    name:'ASTER',
+    sym:'✦',
+    cls:'aster',
+    balance:0
+  },
+
+  {
+    name:'BNB',
+    sym:'◆',
+    cls:'bnb',
+    balance:0
+  },
+
+  {
+    name:'ETH',
+    sym:'Ξ',
+    cls:'eth',
+    balance:0
+  },
+
+  {
+    name:'BTC',
+    sym:'₿',
+    cls:'btc',
+    balance:0
+  },
+
+  {
+    name:'ASBNB',
+    sym:'◆',
+    cls:'bnb',
+    balance:0
+  },
+
+  {
+    name:'CAKE',
+    sym:'◉',
+    cls:'',
+    balance:0
+  },
+
+  {
+    name:'CRCLB',
+    sym:'●',
+    cls:'usdc',
+    balance:0
+  },
+
+  {
+    name:'LISTA',
+    sym:'L',
+    cls:'',
+    balance:0
+  },
+
+  {
+    name:'LISUSD',
+    sym:'$',
+    cls:'',
+    balance:0
+  },
+
+  {
+    name:'SKHYB',
+    sym:'S',
+    cls:'',
+    balance:0
+  },
+
+  {
+    name:'SLISBNB',
+    sym:'◆',
+    cls:'bnb',
+    balance:0
+  }
+
+];
+
+
+const networks = [
+
+  {
+    name:'BNB Chain',
+    code:'BEP20',
+    cls:'bnb'
+  },
+
+  {
+    name:'Ethereum',
+    code:'ERC20',
+    cls:'eth'
+  },
+
+  {
+    name:'TRON',
+    code:'TRC20',
+    cls:'',
+    sym:'T'
+  }
+
+];
+
+
+let selectedCoin = coins[0];
+
+let selectedNetwork = networks[0];
+
+
+function coinHtml(c){
+
+  return `
+    <span class="coin ${c.cls}">
+      ${c.sym}
+    </span>
+  `;
+
+}
+
+
+function renderAssets(){
+
+  document.getElementById('assetList').innerHTML =
+    coins.slice(0,9).map(c => `
+
+      <div class="asset">
+
+        <div class="asset-head">
+
+          ${coinHtml(c)}
+
+          <span class="name">
+            ${c.name}
+          </span>
+
+        </div>
+
+        <div class="asset-grid">
+
+          <div>
+            Wallet Balance<br>
+            <b>
+              ${c.balance.toFixed(8)} $0.00
+            </b>
+          </div>
+
+          <div>
+            Avbl for Withdrawal<br>
+            <b>
+              0.00000000
+            </b>
+          </div>
+
+          <div>
+            Margin Balance<br>
+            <b>
+              0.00000000
+            </b>
+          </div>
+
+          <div>
+            Unrealized PNL<br>
+            <b>
+              0
+            </b>
+          </div>
+
+        </div>
+
+      </div>
+
+    `).join('');
+
+}
+
+
+function openWithdraw(){
+
+  document
+    .getElementById('walletPage')
+    .classList
+    .remove('active');
+
+  document
+    .getElementById('withdrawPage')
+    .classList
+    .add('active');
+
+}
+
+
+function showWallet(){
+
+  document
+    .getElementById('withdrawPage')
+    .classList
+    .remove('active');
+
+  document
+    .getElementById('walletPage')
+    .classList
+    .add('active');
+
+}
+
+
+function openCoinSheet(){
+
+  document.getElementById('coinOptions').innerHTML =
+    coins.map((c,i) => `
+
+      <div
+        class="coin-option"
+        onclick="chooseCoin(${i})">
+
+        ${coinHtml(c)}
+
+        <span>
+          ${c.name}
+        </span>
+
+      </div>
+
+    `).join('');
+
+  document
+    .getElementById('coinSheet')
+    .classList
+    .add('show');
+
+}
+
+
+function chooseCoin(i){
+
+  selectedCoin = coins[i];
+
+  document.getElementById('coinName').textContent =
+    selectedCoin.name;
+
+  document.getElementById('coinIcon').className =
+    'coin ' + selectedCoin.cls;
+
+  document.getElementById('coinIcon').textContent =
+    selectedCoin.sym;
+
+  document.getElementById('unit').textContent =
+    selectedCoin.name;
+
+  document
+    .getElementById('coinSheet')
+    .classList
+    .remove('show');
+
+  updateAmount();
+
+}
+
+
+function openNetworkSheet(){
+
+  document.getElementById('networkOptions').innerHTML =
+    networks.map((n,i) => `
+
+      <div
+        class="network-option"
+        onclick="chooseNetwork(${i})">
+
+        <span>
+          ${coinHtml({
+            cls:n.cls,
+            sym:n.sym || '◆'
+          })}
+
+          ${n.name}
+        </span>
+
+        <span>
+          ›
+        </span>
+
+      </div>
+
+    `).join('');
+
+  document
+    .getElementById('networkSheet')
+    .classList
+    .add('show');
+
+}
+
+
+function chooseNetwork(i){
+
+  selectedNetwork = networks[i];
+
+  document.getElementById('networkName').textContent =
+    selectedNetwork.name;
+
+  document.getElementById('networkIcon').className =
+    'coin ' + selectedNetwork.cls;
+
+  document.getElementById('networkIcon').textContent =
+    selectedNetwork.sym || '◆';
+
+  document
+    .getElementById('networkSheet')
+    .classList
+    .remove('show');
+
+  updateAmount();
+
+}
+
+
+function closeSheets(e){
+
+  e.currentTarget.classList.remove('show');
+
+}
+
+
+function updateAmount(){
+
+  const v =
+    parseFloat(
+      document.getElementById('amount').value
+    ) || 0;
+
+  document.getElementById('available').textContent =
+    `Available : ${selectedCoin.balance} ${selectedCoin.name} (${selectedNetwork.code})`;
+
+  document.getElementById('withdrawable').textContent =
+    `${v.toFixed(2)} USD`;
+
+  document.getElementById('fee').textContent =
+    `0 ${selectedCoin.name}`;
+
+  document.getElementById('submit')
+    .classList
+    .toggle('enabled', v > 0);
+
+}
+
+
+function setMax(){
+
+  document.getElementById('amount').value =
+    selectedCoin.balance;
+
+  updateAmount();
+
+}
+
+
+function submitWithdraw(){
+
+  const v =
+    parseFloat(
+      document.getElementById('amount').value
+    ) || 0;
+
+  if(!v){
+
+    toast('Enter an amount first');
+
+    return;
+
+  }
+
+  if(v > selectedCoin.balance){
+
+    toast('Insufficient demo balance');
+
+    return;
+
+  }
+
+  document
+    .getElementById('spinner')
+    .style
+    .display = 'block';
+
+  setTimeout(() => {
+
+    document
+      .getElementById('spinner')
+      .style
+      .display = 'none';
+
+    toast(
+      'Withdrawal request created in demo mode'
+    );
+
+  },1200);
+
+}
+
+
+function toast(msg){
+
+  const t =
+    document.getElementById('toast');
+
+  t.textContent = msg;
+
+  t.classList.add('show');
+
+  clearTimeout(window.tt);
+
+  window.tt =
+    setTimeout(
+      () => t.classList.remove('show'),
+      2200
+    );
+
+}
+
+
+renderAssets();
+
+updateAmount();
+
+</script>
+
+</body>
+          </html>
